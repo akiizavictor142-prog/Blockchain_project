@@ -1,14 +1,20 @@
-# Initializing our (Empty) blockchain list
+import functools
+# The reward we give to minners (for creating a new block)
 MINING_REWARD = 10
 
+# Our starting block for the blockchain
 genesis_block = {
         'previous_hash': '', 
         'index': 0, 
         'transactions': []
     }
+# Initializing our (Empty) blockchain list
 blockchain = [genesis_block]
+# Unhandled transactions
 open_transactions = []
+# we are the owner of the blockchain node, hence this is our identifier
 owner = 'Akiiza'
+# Regestered participants: ourself + other people sending/ recieving coins
 participants = {'Akiiza'}
 
 def hash_block(block):
@@ -17,17 +23,15 @@ def hash_block(block):
 
 def get_balance(participant):
     tx_sender = [[tx['amount'] for tx in block['transactions'] if tx['sender'] == participant] for block in blockchain]
+    # Fetch a list of all coin amounts for the given person
+    # This fetches sent amounts of the open transactions (To avoid doubl spending)
     open_tx_sender = [tx['amount'] for tx in open_transactions if tx['sender'] == participant]
     tx_sender.append(open_tx_sender)
-    amount_sent = 0
-    for tx in tx_sender:
-        if len(tx) > 0:
-            amount_sent += tx[0]
+    amount_sent = functools.reduce(lambda tx_sum, tx_amt: tx_sum + tx_amt[0] if len(tx_amt) > 0 else 0, tx_sender, 0)
+
     tx_recipient = [[tx['amount'] for tx in block['transactions'] if tx['recipient'] == participant] for block in blockchain]
-    amount_recieved = 0
-    for tx in tx_recipient:
-        if len(tx) > 0:
-            amount_recieved += tx[0]
+    amount_recieved = functools.reduce(lambda tx_sum, tx_amt: tx_sum + tx_amt[0] if len(tx_amt) > 0 else 0, tx_recipient, 0)
+
     return amount_recieved - amount_sent 
 
 
@@ -171,7 +175,7 @@ while waiting_for_input:
         print('Invalid blockchain')
         # Break out of the loop
         break
-    print(get_balance('Akiiza'))
+    print('Balance of {}: {:6.2f}'.format('Akiiza', get_balance('Akiiza')))
 else:
     print('User left')
 
